@@ -5,9 +5,9 @@ includet("stone1996-module.jl")
 
 using .Stone1996
 
-inputs = read_inputs("~/disparity/data/JIMS/sin_5_by_1000_period1000/image1.txt",
-                     "~/disparity/data/JIMS/sin_5_by_1000_period1000/image2.txt",
-                     "~/disparity/data/JIMS/sin_5_by_1000_period1000/shifts.txt");
+inputs = read_inputs("data/image1.txt",
+                     "data/image2.txt",
+                     "data/shifts.txt");
 
 wts = vec(readdlm("data/wts.0"))
 wts_final = vec(readdlm("data/wts.990"))
