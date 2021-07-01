@@ -3,7 +3,7 @@
 module Stone1996
 
 using DelimitedFiles
-export read_inputs, test, Net, forward, backward
+export read_inputs, test, Net, forward, backward, new_net, remember
 
 test() = 5
 
@@ -130,10 +130,9 @@ function backward(net)
 
 
     ## A.6
-    net.U = net.U + 0.5*(net.zbar   - net.z[ k ])^2
-    net.V = net.V + 0.5*(net.ztilde - net.z[ k ])^2
-    @show net.U, net.V
-
+    net.U = net.U + 0.5*(net.ztilde   - net.z[ k ])^2
+    net.V = net.V + 0.5*(net.zbar     - net.z[ k ])^2
+    
     ## ∂z/∂w for w_jk weights (A10)
     for j = 1:nj, k=1
         net.dzdw[ wjk(j, k, ni, nj) ] = net.z[ aj(j, ni)]
@@ -166,6 +165,54 @@ function backward(net)
     net.dFdw = @. (1/net.V) * net.dVdw - (1/net.U) * net.dUdw
 
     return nothing
+end
+
+"""
+
+"""
+function remember(net)
+    net.z1      = net.z
+    net.dzdw1      = net.dzdw
+    net.dztildedw1 = net.dztildedw
+    net.dzbardw1 = net.dzbardw
+    return nothing
+end
+
+"""
+Create a new network.
+"""
+function new_net(inputs, wts)
+    z = zeros(22)
+    z1 = zeros(22)
+    lambda_s = 2.0^ 1/32
+    lambda_l = 2.0^ 1/3200
+    U = 0.0
+    V = 0.0
+    F = 0.0
+    ztilde = 0.0
+    zbar = 0.0
+    nwts = 120
+    dUdw = zeros(nwts)
+    dVdw = zeros(nwts)
+    dzdw = zeros(nwts)
+    dzdw1 = zeros(nwts)
+    dztildedw1 = zeros(nwts)
+    dztildedw = zeros(nwts)
+    dzbardw1 = zeros(nwts)
+    dzbardw = zeros(nwts)
+    dFdw = zeros(nwts)
+    net = Net(inputs, wts, 11, 10, 1,
+              lambda_s, lambda_l,
+              U, V, F, 
+              ztilde, zbar,
+              z, z1,
+              dUdw, dVdw,
+              dzdw, dzdw1,
+              dztildedw, dztildedw1,
+              dzbardw, dzbardw1,
+              dFdw
+              )
+    net
 end
 
 
