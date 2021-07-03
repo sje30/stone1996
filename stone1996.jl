@@ -23,9 +23,11 @@ backward(net)
 remember(net)
 plot(net.dUdw)
 forward(net, 2)
+backward(net)
+remember(net)
 @show net.U, net.V
 
-for j=1:10, i=1:1000
+for j=1:100, i=1:1000
     forward(net, i)
     backward(net)
     remember(net)
@@ -45,5 +47,28 @@ plot(allz, xlabel="input number", ylabel="output")
 netf = new_net(inputs, wts_final)
 @time allz = [forward(netf, x) for x in 1:1000]
 plot(allz, xlabel="input number", ylabel="output")
+
+
+z  = []
+zb = []
+zt = []
+for j=1:1
+    for i=1:1000
+        forward(netf, i)
+        backward(netf)
+        remember(netf)
+        push!(z, netf.z[22])
+        push!(zb, netf.zbar)
+        push!(zt, netf.ztilde)
+        if i==999
+            @show netf.F, netf.V, netf.U
+        end
+    end
+end
+
+plot(z)
+plot!(zb)
+plot!(zt)
+savefig("smoothed.png")
 
 
