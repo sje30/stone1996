@@ -128,7 +128,6 @@ function backward(net)
     net.ztilde = (net.lambda_s * net.ztilde) + ( 1 - net.lambda_s) * net.z1[ k ]
     net.zbar   = (net.lambda_l * net.zbar)   + ( 1 - net.lambda_l) * net.z1[ k ]
 
-
     ## A.6
     net.U = net.U + 0.5*(net.ztilde   - net.z[ k ])^2
     net.V = net.V + 0.5*(net.zbar     - net.z[ k ])^2
@@ -168,13 +167,13 @@ function backward(net)
 end
 
 """
-
+Remember the activations from one iteration to the next.
 """
 function remember(net)
-    net.z1      = net.z
-    net.dzdw1      = net.dzdw
-    net.dztildedw1 = net.dztildedw
-    net.dzbardw1 = net.dzbardw
+    @. net.z1      = net.z
+    @. net.dzdw1      = net.dzdw
+    @. net.dztildedw1 = net.dztildedw
+    @. net.dzbardw1 = net.dzbardw
     return nothing
 end
 
@@ -184,8 +183,8 @@ Create a new network.
 function new_net(inputs, wts)
     z = zeros(22)
     z1 = zeros(22)
-    lambda_s = 2.0^ 1/32
-    lambda_l = 2.0^ 1/3200
+    lambda_s = 2.0^ (-1/32)
+    lambda_l = 2.0^ (-1/3200)
     U = 0.0
     V = 0.0
     F = 0.0
