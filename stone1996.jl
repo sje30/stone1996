@@ -1,6 +1,7 @@
 using DelimitedFiles
 using Plots
 using Revise
+using LinearAlgebra
 includet("stone1996-module.jl")
 
 using .Stone1996
@@ -27,13 +28,20 @@ backward(net)
 remember(net)
 @show net.U, net.V
 
-for j=1:100, i=1:1000
-    forward(net, i)
-    backward(net)
-    remember(net)
-    if i==999
-        @show net.F, net.V, net.U
+
+
+net = new_net(inputs, wts);
+for epoch=1:10000
+    clear(net)
+    for i=1:1000
+        forward(net, i)
+        backward(net)
+        remember(net)
+        if i==999
+            @show net.F, net.V, net.U
+        end
     end
+    adapt(net)
 end
 
     
@@ -52,7 +60,7 @@ plot(allz, xlabel="input number", ylabel="output")
 z  = []
 zb = []
 zt = []
-for j=1:1
+for j=1:4
     for i=1:1000
         forward(netf, i)
         backward(netf)
