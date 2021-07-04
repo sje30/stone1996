@@ -34,6 +34,7 @@ remember(net)
 net = new_net(inputs, wts);
 save_epochs = [10 100 1000 10000]; save_line = 1
 saved = zeros( length(save_epochs), 1000)
+allF = []
 for epoch=1:10000
     clear(net)
     for i=1:1000
@@ -50,13 +51,18 @@ for epoch=1:10000
         @. saved[save_line,:] = allz
         save_line += 1
     end
+    push!(allF, net.F)
 end
 
 plot(saved', layout=4)
 savefig("development.png")
 
+plot(allF, ylabel="merit function F", xlabel="epoch")
+savefig("merit.png")
+
 @time allz = [forward(net, x) for x in 1:1000]
 plot(allz, xlabel="input number", ylabel="output")
+
 
 
 
