@@ -3,9 +3,11 @@
 module Stone1996
 
 using DelimitedFiles
+using LinearAlgebra
 export read_inputs, test, Net, forward, backward, new_net, remember
+export adapt, clear
 
-test() = 5
+test() = 4
 
 mutable struct Net
     inputs::Array{Float64,2}
@@ -99,6 +101,7 @@ function forward(net, which)
         for i in 1:ni
             
             @assert n == wij(i,j, ni)
+            @assert i == ai(i)
             tot = tot + (net.w[n] * net.z[i])
             n = n+1
         end
@@ -110,9 +113,11 @@ function forward(net, which)
     tot = 0.0
     for j in 1:nj
         @assert n == wjk(j,k, ni, nj)
+        @assert aj(j, ni) == j+ni
         tot = tot + (net.w[n] * net.z[j+ni])
         n = n+1
     end
+    @assert ak(1, ni, nj) == ni+nj+1
     net.z[ni+nj+1] = tot
 end
 
@@ -125,12 +130,14 @@ function backward(net)
     ni = net.ni
     nj = net.nj
     k = ak(1, ni, nj)
+    zk = net.z[k]
+    
     net.ztilde = (net.lambda_s * net.ztilde) + ( 1 - net.lambda_s) * net.z1[ k ]
     net.zbar   = (net.lambda_l * net.zbar)   + ( 1 - net.lambda_l) * net.z1[ k ]
 
     ## A.6
-    net.U = net.U + 0.5*(net.ztilde   - net.z[ k ])^2
-    net.V = net.V + 0.5*(net.zbar     - net.z[ k ])^2
+    net.U = net.U + 0.5*(net.ztilde - zk)^2
+    net.V = net.V + 0.5*(net.zbar   - zk)^2
     
     ## ∂z/∂w for w_jk weights (A10)
     for j = 1:nj, k=1
@@ -152,8 +159,8 @@ function backward(net)
     end
 
     ## dUdW (A7)
-    k1 = (net.ztilde - net.z[ ak(1, ni, nj)])
-    k2 = (net.zbar   - net.z[ ak(1, ni, nj)])
+    k1 = (net.ztilde - zk)
+    k2 = (net.zbar   - zk)
     for w in 1:length(net.w)
         net.dUdw[ w ] = net.dUdw[ w ] + k1*(net.dztildedw[ w ] - net.dzdw[ w ])
         net.dVdw[ w ] = net.dVdw[ w ] + k2*(net.dzbardw[ w ]   - net.dzdw[ w ])
@@ -161,11 +168,28 @@ function backward(net)
 
     ## Now we update F and dF/dw
     net.F = log(net.V / net.U)
-    net.dFdw = @. (1/net.V) * net.dVdw - (1/net.U) * net.dUdw
+
+    ## accumulate the updates to the weights
+    # @. net.dFdw =  net.dFdw +
+    #                ( (1/net.V) * net.dVdw ) -
+    #                ( (1/net.U) * net.dUdw )
+
+    @. net.dFdw =  ( (1/net.V) * net.dVdw ) -
+                   ( (1/net.U) * net.dUdw )
 
     return nothing
 end
 
+
+"""
+Adapt the weights in the network
+"""
+function adapt(net)
+    epsilon = 0.01 * norm(net.w) / norm(net.dFdw)
+    @. net.w = net.w + (epsilon * net.dFdw)
+end
+
+    
 """
 Remember the activations from one iteration to the next.
 """
@@ -177,6 +201,18 @@ function remember(net)
     return nothing
 end
 
+"""
+At the end of the epoch, after learning, clear a few things.
+"""
+function clear(net::Net)
+    net.U = 0
+    net.V = 0
+    net.F = 0
+    @. net.dFdw = 0
+    @. net.dUdw = 0
+    @. net.dVdw = 0
+end
+    
 """
 Create a new network.
 """
@@ -200,7 +236,7 @@ function new_net(inputs, wts)
     dzbardw1 = zeros(nwts)
     dzbardw = zeros(nwts)
     dFdw = zeros(nwts)
-    net = Net(inputs, wts, 11, 10, 1,
+    net = Net(inputs, copy(wts), 11, 10, 1,
               lambda_s, lambda_l,
               U, V, F, 
               ztilde, zbar,
