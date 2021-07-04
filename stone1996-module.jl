@@ -173,7 +173,9 @@ function backward(net)
     # @. net.dFdw =  net.dFdw +
     #                ( (1/net.V) * net.dVdw ) -
     #                ( (1/net.U) * net.dUdw )
-
+    # This is only useful at the end of an epoch; not with online training
+    # as the estimates of V and U are going to be poor at the start of an epoch.
+    
     @. net.dFdw =  ( (1/net.V) * net.dVdw ) -
                    ( (1/net.U) * net.dUdw )
 
