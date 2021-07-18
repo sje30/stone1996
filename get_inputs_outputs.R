@@ -24,4 +24,6 @@ for (i in 1:1000) {
 
 p = nnet(inputs, outputs, size=10, linout=T)
 
+png(file="fitted_bp.png")
 plot(p$fitted)
+dev.off()
