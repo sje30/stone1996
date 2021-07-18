@@ -22,7 +22,7 @@ for (i in 1:1000) {
 ## Note the network has 121 weights rather than 120 as before -- the output unit
 ## has a bias unit too.
 
-p = nnet(inputs, outputs, size=10, linout=T)
+p = nnet(inputs, outputs, size=10, linout=T, maxit=1000)
 
 png(file="fitted_bp.png")
 plot(p$fitted)
